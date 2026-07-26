@@ -1,0 +1,156 @@
+# ==========================================
+# STOCK_ANALYZER_US/.gitignore（根目錄）
+# ==========================================
+
+### Python ###
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django / Flask
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+instance/
+.webassets-cache
+
+# Scrapy
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath
+*.sage.py
+
+# Environments
+.env*
+!.env.example
+.venv
+.stock_analyzer_env
+env/
+venv/
+stock_analyzer_env/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# mkdocs
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre / pytype
+.pyre/
+.pytype/
+
+# Cython
+cython_debug/
+
+# PyCharm
+#.idea/
+
+# Poetry / ruff
+poetry.toml
+.ruff_cache/
+
+# LSP
+pyrightconfig.json
+
+# ==========================================
+# 專案特定忽略
+# ==========================================
+
+# Log 檔案
+*.log
+logs/
+
+# DuckDB 本地資料庫（不需版控）
+*.duckdb
+*.duckdb.wal
+
+# 資料檔（根目錄 data/ 資料夾）
+data/
+
+# JSON / CSV（根目錄層級）
+# ⚠️ dbt_project 內由 us/dbt_project/.gitignore 另行控制
+*.json
+*.csv
