@@ -12,7 +12,7 @@ import json
 import logging
 
 import time
-from datetime import datetime, time as dtime
+from datetime import datetime, timedelta, time as dtime
 from zoneinfo import ZoneInfo
 
 from kafka import KafkaProducer
@@ -22,6 +22,8 @@ from dotenv import load_dotenv, find_dotenv
 
 from ...config.minio_conn import MINIO_BUCKET
 from ...config.minio_duckdb_conn import get_duckdb_conn
+
+from ...notify.slack_notify import slack_rt_pipe_notify
 
 load_dotenv(find_dotenv())
 
@@ -108,11 +110,47 @@ def get_open_close_time(tz):
     
     elif holiday_hours == "":
         # 節日休市
-        return None
-    
+        logger.info("今日休市，結束程式")
+        slack_rt_pipe_notify("美股今日休市 , producer 程式已關閉 !")
+        sys.exit(0)
+
     else:
         # 節日縮短交易
         return parse_open_close_time(holiday_hours)
+
+
+def market_open_watcher(tz, open_time, close_time):
+
+    slack_rt_pipe_notify("美股 realtime producer 程式已開啟 !")
+    
+    while datetime.now(ZoneInfo(tz)).time() < open_time:
+
+        now_time = datetime.now(ZoneInfo(tz)).time()
+
+        remaining = (
+            datetime.combine(datetime.now(ZoneInfo(tz)).date(), open_time) -
+            datetime.combine(datetime.now(ZoneInfo(tz)).date(), now_time)
+        ) # timedelta
+
+        if remaining > timedelta(hours=1):
+            logger.info(f"距離美股開盤剩餘 {remaining}")  # 自動格式化如 1:30:00
+            slack_rt_pipe_notify(f"距離美股開盤剩餘 {remaining} !")
+            time.sleep(1800)  # 30 分鐘檢查一次
+
+        elif timedelta(minutes=6) < remaining <= timedelta(minutes=60):
+            logger.info(f"距離美股開盤剩餘 {remaining}")  # 自動格式化如 1:30:00
+            slack_rt_pipe_notify(f"距離美股開盤剩餘 {remaining} !")
+            time.sleep(300)  # 5 分鐘檢查一次
+
+        else:
+            logger.info(f"距離美股開盤剩餘 {remaining}")  # 自動格式化如 1:30:00
+            slack_rt_pipe_notify(f"距離美股開盤剩餘 {remaining} !")
+            time.sleep(5)  # 5 s 檢查一次
+
+    logger.info("美股已經開盤 !")
+    slack_rt_pipe_notify(f"美股已經開盤, 收盤時間為 {tz} {close_time.strftime("%H:%M")} !")
+
+    return
 
 def market_close_watcher(ws_ref, tz, close_time):
     """
@@ -120,10 +158,16 @@ def market_close_watcher(ws_ref, tz, close_time):
     """
     while True:
         now_time = datetime.now(ZoneInfo(tz)).time()
- 
+
+        remaining = (
+            datetime.combine(datetime.now(ZoneInfo(tz)).date(), close_time) -
+            datetime.combine(datetime.now(ZoneInfo(tz)).date(), now_time)
+        ) # timedelta
+
         if now_time >= close_time:
             logger.info(f"已收盤（{close_time}），停止程式")
             try:
+                slack_rt_pipe_notify("美股現在已經收盤 (程式延後關閉) !")
                 producer.flush()
                 producer.close()
                 ws_ref.close()
@@ -134,7 +178,16 @@ def market_close_watcher(ws_ref, tz, close_time):
             finally:
                 sys.exit(0)
 
-        time.sleep(120)
+        elif remaining <= timedelta(hours=1):
+            logger.info(f"距離美股收盤剩餘 {remaining}")  # 自動格式化如 1:30:00
+            slack_rt_pipe_notify(f"距離美股收盤剩餘 {remaining} !")
+            time.sleep(600)  # 10 分鐘檢查一次
+
+        else:
+            logger.info(f"距離美股收盤剩餘 {remaining}")  # 自動格式化如 1:30:00
+            slack_rt_pipe_notify(f"距離美股收盤剩餘 {remaining} !")
+            time.sleep(1800) # 30 分鐘檢查一次
+
 
 def get_co_fetch_list(
     conn: duckdb.DuckDBPyConnection,
@@ -203,28 +256,8 @@ def main():
     tz = "America/New_York"
     open_time, close_time = get_open_close_time(tz)
 
-    if get_open_close_time(tz) is None:
-        logger.info("今日休市，結束程式")
-        sys.exit(0)
+    market_open_watcher(tz, open_time, close_time)
 
-    if datetime.now(ZoneInfo(tz)).time() >= close_time:
-        logger.info("已收盤，結束程式")
-        sys.exit(0)
-    
-    if datetime.now(ZoneInfo(tz)).time() < open_time:
-        wait_sec = (
-            datetime.combine(datetime.now(ZoneInfo(tz)).date(), open_time) -
-            datetime.combine(datetime.now(ZoneInfo(tz)).date(), datetime.now(ZoneInfo(tz)).time())
-        ).seconds
-
-        for i in range(wait_sec, 0, -1):
-            h = i // 3600
-            m = (i % 3600) // 60
-            s = i % 60
-            logger.info(f"開盤倒數 {h} 小時 {m} 分 {s} 秒...", end='\r')
-            time.sleep(1)
-
-    logger.info("正在盤中 !")
     websocket.enableTrace(True)
     ws = websocket.WebSocketApp(f"wss://ws.finnhub.io?token={os.environ['FINNHUB_API_KEY']}",
                             on_message = on_message,

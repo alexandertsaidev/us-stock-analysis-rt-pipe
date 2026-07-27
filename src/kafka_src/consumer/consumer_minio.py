@@ -17,6 +17,8 @@ from dotenv import load_dotenv, find_dotenv
 
 from ...config.minio_conn import get_s3_client, MINIO_BUCKET
 
+from ...notify.slack_notify import slack_rt_pipe_notify
+
 load_dotenv(find_dotenv())
 
 logger = logging.getLogger(__name__)
@@ -63,7 +65,8 @@ def get_open_close_time(tz):
 
     # 週末直接休市
     if now_dt.weekday() >= 5:
-        return None
+        slack_rt_pipe_notify("美股今日休市 , realtime minio 程式已關閉 !")
+        sys.exit(0)
 
     date_str = now_dt.strftime("%Y-%m-%d")
     holiday_hours = is_holiday(date_str)
@@ -74,8 +77,10 @@ def get_open_close_time(tz):
     
     elif holiday_hours == "":
         # 節日休市
-        return None
-    
+        logger.info("今日休市，結束程式")
+        slack_rt_pipe_notify("美股今日休市 , realtime minio 程式已關閉 !")
+        sys.exit(0)
+
     else:
         # 節日縮短交易
         return parse_open_close_time(holiday_hours)
@@ -89,11 +94,10 @@ def market_close_watcher(tz, close_time):
  
         if now_time >= close_time:
             logger.info(f"已收盤（{close_time}），停止程式")
-
+            slack_rt_pipe_notify("美股 realtime minio 程式已關閉 !")
             sys.exit(0)
 
         time.sleep(120)
-
 
 def make_consumer(
     group_id,
@@ -200,15 +204,9 @@ def run_minio_consumer():
 def main():
 
     tz = "America/New_York"
+    slack_rt_pipe_notify("美股 realtime minio 程式已開啟 !")
+
     open_time, close_time = get_open_close_time(tz)
-
-    if get_open_close_time(tz) is None:
-        logger.info("今日休市，結束程式")
-        sys.exit(0)
-
-    if datetime.now(ZoneInfo(tz)).time() >= close_time:
-        logger.info("已收盤，結束程式")
-        sys.exit(0)
 
     # 1.thread: market_close_watcher 監控收盤時間
     watcher = threading.Thread(

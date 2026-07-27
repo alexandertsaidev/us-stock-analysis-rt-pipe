@@ -1,0 +1,26 @@
+[project]
+name = "us"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "pandas (>=3.0.3,<4.0.0)",
+    "numpy (>=2.4.6,<3.0.0)",
+    "python-dotenv (>=1.2.2,<2.0.0)",
+    "dbt-duckdb (>=1.10.1,<2.0.0)",
+    "slack-sdk (>=3.42.0,<4.0.0)",
+    "kafka-python (>=3.0.2,<4.0.0)",
+    "websocket-client (>=1.9.0,<2.0.0)",
+    "boto3 (>=1.43.33,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pipdeptree = ">=3.1.0"

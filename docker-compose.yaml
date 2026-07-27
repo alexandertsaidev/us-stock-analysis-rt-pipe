@@ -1,0 +1,35 @@
+services:
+  kafka-producer:
+    image: us-stock-rt-kafka:v1.0
+    container_name: kafka-producer
+    command: ["python", "-m", "src.kafka_src.producer.producer"]
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - realtime-network
+
+  kafka-consumer-alert:
+    image: us-stock-rt-kafka:v1.0
+    container_name: kafka-consumer-alert
+    command: ["python", "-m", "src.kafka_src.consumer.consumer_alert"]
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - realtime-network
+
+  kafka-consumer-minio:
+    image: us-stock-rt-kafka:v1.0
+    container_name: kafka-consumer-minio
+    command: ["python", "-m", "src.kafka_src.consumer.consumer_minio"]
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - realtime-network
+
+networks:
+  realtime-network:        # compose 內部引用的別名
+    external: true
+    name: realtime-workspace_default # 指定實際的網路名稱

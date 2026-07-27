@@ -1,0 +1,39 @@
+FROM python:3.11-slim AS dev
+WORKDIR /app
+
+ENV PYTHONPATH=/app/src/
+
+COPY pyproject.toml poetry.lock ./
+RUN pip install poetry \
+    && poetry config virtualenvs.create false \
+    && poetry install --no-root --only main
+
+# 只複製 kafka 需要的
+COPY src/kafka_src/ /app/src/kafka_src/
+COPY src/config/   /app/src/config/
+COPY src/notify/   /app/src/notify/
+COPY src/upload_pipeline/ /app/src/upload_pipeline/
+
+RUN touch /app/src/__init__.py
+CMD ["bash"]
+
+
+FROM python:3.11-slim AS prod
+WORKDIR /app
+
+ENV PYTHONPATH=/app/
+
+COPY pyproject.toml poetry.lock ./
+RUN pip install poetry \
+    && poetry config virtualenvs.create false \
+    && poetry install --no-root --only main
+
+# 只複製 kafka 需要的
+COPY src/kafka_src/ /app/kafka_src/
+COPY src/config/ /app/config/
+COPY src/notify/ /app/notify/
+COPY src/upload_pipeline/ /app/upload_pipeline/
+
+# 預設，避免裸跑沒指令
+ENTRYPOINT ["python"]
+CMD ["--help"]   

@@ -19,7 +19,7 @@ from botocore.exceptions import ClientError
 from ...config.minio_conn import MINIO_BUCKET
 from ...config.minio_duckdb_conn import get_duckdb_conn
 
-from ...notify.slack_notify import slack_price_notify
+from ...notify.slack_notify import slack_rt_pipe_notify
 
 load_dotenv(find_dotenv())
 
@@ -67,7 +67,8 @@ def get_open_close_time(tz):
 
     # 週末直接休市
     if now_dt.weekday() >= 5:
-        return None
+        slack_rt_pipe_notify("美股今日休市 , realtime alert 程式已關閉 !")
+        sys.exit(0)
 
     date_str = now_dt.strftime("%Y-%m-%d")
     holiday_hours = is_holiday(date_str)
@@ -78,8 +79,10 @@ def get_open_close_time(tz):
     
     elif holiday_hours == "":
         # 節日休市
-        return None
-    
+        logger.info("今日休市，結束程式")
+        slack_rt_pipe_notify("美股今日休市 , realtime alert 程式已關閉 !")
+        sys.exit(0)
+
     else:
         # 節日縮短交易
         return parse_open_close_time(holiday_hours)
@@ -93,11 +96,11 @@ def market_close_watcher(tz, close_time):
 
         if now_time >= close_time:
             logger.info(f"已收盤（{close_time}），停止程式")
+            slack_rt_pipe_notify("美股 realtime alert 程式已關閉 !")
 
             sys.exit(0)
 
         time.sleep(120)
-
 
 def get_co_fetch_list(
     conn: duckdb.DuckDBPyConnection,
@@ -160,7 +163,6 @@ def load_alert_config() -> dict:
 
     return config
 
-
 def make_consumer(
     group_id,
     fetch_max_wait_ms=500,
@@ -200,7 +202,6 @@ def run_alert_consumer():
 
     consumer = make_consumer(
         "alert-consumer",
-        enable_auto_commit=False,
         fetch_max_wait_ms=50,
         fetch_min_bytes=1,
     )
@@ -251,7 +252,7 @@ def run_alert_consumer():
                                 f"{p:>8.3f} → {price:>8.3f}"
                             )
                             print(text)
-                            slack_price_notify(text)
+                            slack_rt_pipe_notify(text)
 
                             last_sent[idempotent_key] = now
                             last_sent.sync()  # 強制 flush，確保 crash 後狀態不丟
@@ -259,18 +260,11 @@ def run_alert_consumer():
             prev[symbol] = price
             consumer.commit()
 
-
 def main():
     tz = "America/New_York"
+    slack_rt_pipe_notify("美股 realtime alert 程式已開啟 !")
+
     open_time, close_time = get_open_close_time(tz)
-
-    if get_open_close_time(tz) is None:
-        logger.info("今日休市，結束程式")
-        sys.exit(0)
-
-    if datetime.now(ZoneInfo(tz)).time() >= close_time:
-        logger.info("已收盤，結束程式")
-        sys.exit(0)
 
     # 1.thread: market_close_watcher 監控收盤時間
     watcher = threading.Thread(
@@ -284,7 +278,6 @@ def main():
     consumer_thread = threading.Thread(target=run_alert_consumer)
     consumer_thread.start()
     consumer_thread.join()
-
 
 if __name__ == "__main__":
     main()
