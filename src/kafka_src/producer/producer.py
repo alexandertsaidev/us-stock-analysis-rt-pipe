@@ -132,23 +132,27 @@ def market_open_watcher(tz, open_time, close_time):
             datetime.combine(datetime.now(ZoneInfo(tz)).date(), now_time)
         ) # timedelta
 
+        h = remaining.seconds // 3600
+        m = (remaining.seconds % 3600) // 60
+        s = remaining.seconds % 60
+
         if remaining > timedelta(hours=1):
-            logger.info(f"距離美股開盤剩餘 {remaining}")  # 自動格式化如 1:30:00
-            slack_rt_pipe_notify(f"距離美股開盤剩餘 {remaining} !")
+            logger.info(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒")  # 自動格式化如 1:30:00
+            slack_rt_pipe_notify(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒 !")
             time.sleep(1800)  # 30 分鐘檢查一次
 
         elif timedelta(minutes=6) < remaining <= timedelta(minutes=60):
-            logger.info(f"距離美股開盤剩餘 {remaining}")  # 自動格式化如 1:30:00
-            slack_rt_pipe_notify(f"距離美股開盤剩餘 {remaining} !")
+            logger.info(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒")  # 自動格式化如 1:30:00
+            slack_rt_pipe_notify(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒 !")
             time.sleep(300)  # 5 分鐘檢查一次
 
         else:
-            logger.info(f"距離美股開盤剩餘 {remaining}")  # 自動格式化如 1:30:00
-            slack_rt_pipe_notify(f"距離美股開盤剩餘 {remaining} !")
+            logger.info(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒")  # 自動格式化如 1:30:00
+            slack_rt_pipe_notify(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒 !")
             time.sleep(5)  # 5 s 檢查一次
 
     logger.info("美股已經開盤 !")
-    slack_rt_pipe_notify(f"美股已經開盤, 收盤時間為 {tz} {close_time.strftime("%H:%M")} !")
+    slack_rt_pipe_notify(f"美股已經開盤, 收盤時間為 {tz} {close_time.strftime('%H:%M')} !")
 
     return
 
@@ -163,6 +167,10 @@ def market_close_watcher(ws_ref, tz, close_time):
             datetime.combine(datetime.now(ZoneInfo(tz)).date(), close_time) -
             datetime.combine(datetime.now(ZoneInfo(tz)).date(), now_time)
         ) # timedelta
+
+        h = remaining.seconds // 3600
+        m = (remaining.seconds % 3600) // 60
+        s = remaining.seconds % 60
 
         if now_time >= close_time:
             logger.info(f"已收盤（{close_time}），停止程式")
@@ -179,13 +187,13 @@ def market_close_watcher(ws_ref, tz, close_time):
                 sys.exit(0)
 
         elif remaining <= timedelta(hours=1):
-            logger.info(f"距離美股收盤剩餘 {remaining}")  # 自動格式化如 1:30:00
-            slack_rt_pipe_notify(f"距離美股收盤剩餘 {remaining} !")
+            logger.info(f"距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒")  # 自動格式化如 1:30:00
+            slack_rt_pipe_notify(f"距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒 !")
             time.sleep(600)  # 10 分鐘檢查一次
 
         else:
-            logger.info(f"距離美股收盤剩餘 {remaining}")  # 自動格式化如 1:30:00
-            slack_rt_pipe_notify(f"距離美股收盤剩餘 {remaining} !")
+            logger.info(f"距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒")  # 自動格式化如 1:30:00
+            slack_rt_pipe_notify(f"距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒 !")
             time.sleep(1800) # 30 分鐘檢查一次
 
 
