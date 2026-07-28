@@ -67,7 +67,7 @@ def get_open_close_time(tz):
 
     # 週末直接休市
     if now_dt.weekday() >= 5:
-        slack_rt_pipe_notify("美股今日休市 , realtime alert 程式已關閉 !")
+        slack_rt_pipe_notify("🔴 美股今日休市 , realtime alert 程式已關閉 !")
         sys.exit(0)
 
     date_str = now_dt.strftime("%Y-%m-%d")
@@ -80,7 +80,7 @@ def get_open_close_time(tz):
     elif holiday_hours == "":
         # 節日休市
         logger.info("今日休市，結束程式")
-        slack_rt_pipe_notify("美股今日休市 , realtime alert 程式已關閉 !")
+        slack_rt_pipe_notify("🔴 美股今日休市 , realtime alert 程式已關閉 !")
         sys.exit(0)
 
     else:
@@ -96,7 +96,7 @@ def market_close_watcher(tz, close_time):
 
         if now_time >= close_time:
             logger.info(f"已收盤（{close_time}），停止程式")
-            slack_rt_pipe_notify("美股 realtime alert 程式已關閉 !")
+            slack_rt_pipe_notify("🔴 美股 realtime alert 程式已關閉 !")
 
             sys.exit(0)
 
@@ -230,10 +230,10 @@ def run_alert_consumer():
                     crossed   = False
 
                     if "upper" in label and p <= threshold and price > threshold:
-                        direction = "▲ 升破"
+                        direction = "🟩 ▲ 升破"
                         crossed   = True
                     elif "lower" in label and p >= threshold and price < threshold:
-                        direction = "▼ 跌破"
+                        direction = "🔻跌破"
                         crossed   = True
 
                     if crossed:
@@ -262,7 +262,7 @@ def run_alert_consumer():
 
 def main():
     tz = "America/New_York"
-    slack_rt_pipe_notify("美股 realtime alert 程式已開啟 !")
+    slack_rt_pipe_notify("🟢 美股 realtime alert 程式已開啟 !")
 
     open_time, close_time = get_open_close_time(tz)
 

@@ -65,7 +65,7 @@ def get_open_close_time(tz):
 
     # 週末直接休市
     if now_dt.weekday() >= 5:
-        slack_rt_pipe_notify("美股今日休市 , realtime minio 程式已關閉 !")
+        slack_rt_pipe_notify("🔴 美股今日休市 , realtime minio 程式已關閉 !")
         sys.exit(0)
 
     date_str = now_dt.strftime("%Y-%m-%d")
@@ -78,7 +78,7 @@ def get_open_close_time(tz):
     elif holiday_hours == "":
         # 節日休市
         logger.info("今日休市，結束程式")
-        slack_rt_pipe_notify("美股今日休市 , realtime minio 程式已關閉 !")
+        slack_rt_pipe_notify("🔴 美股今日休市 , realtime minio 程式已關閉 !")
         sys.exit(0)
 
     else:
@@ -94,7 +94,7 @@ def market_close_watcher(tz, close_time):
  
         if now_time >= close_time:
             logger.info(f"已收盤（{close_time}），停止程式")
-            slack_rt_pipe_notify("美股 realtime minio 程式已關閉 !")
+            slack_rt_pipe_notify("🔴 美股 realtime minio 程式已關閉 !")
             sys.exit(0)
 
         time.sleep(120)
@@ -167,15 +167,14 @@ def run_minio_consumer():
                         # key 改成 (symbol, date) 二元組，避免跨日混批
                         groups[(record.value["s"], trade_date)].append(record)
 
-                    for symbol, msgs in groups.items():
+                    for (sym, trade_date), msgs in groups.items():   # ← 直接解包
                         records = [m.value for m in msgs]
 
-                        t_start  = datetime.fromtimestamp(records[0]["t"] / 1000, tz=ZoneInfo(tz))
-                        date     = t_start.strftime("%Y-%m-%d")
+                        t_start = datetime.fromtimestamp(records[0]["t"] / 1000, tz=ZoneInfo(tz))
                         first_msg, last_msg = msgs[0], msgs[-1]
 
                         key = (
-                            f"stock/real-time/prices/bronze/{symbol}/{date}/"
+                            f"stock/real-time/prices/bronze/{sym}/{trade_date}/"
                             f"p{first_msg.partition}_{first_msg.offset}-{last_msg.offset}.jsonl"
                         )
 
@@ -187,7 +186,7 @@ def run_minio_consumer():
                             ContentLength=len(jsonl_bytes),
                             ContentType="application/octet-stream",
                         )
-                        logger.info(f"MinIO flush {len(records):>4} 筆  {symbol:<6} → {key}")
+                        logger.info(f"MinIO flush {len(records):>4} 筆  {sym:<6} → {key}")
 
                     # 所有 symbol 都成功才執行以下兩行
                     buf = []
@@ -204,7 +203,7 @@ def run_minio_consumer():
 def main():
 
     tz = "America/New_York"
-    slack_rt_pipe_notify("美股 realtime minio 程式已開啟 !")
+    slack_rt_pipe_notify("🟢 美股 realtime minio 程式已開啟 !")
 
     open_time, close_time = get_open_close_time(tz)
 

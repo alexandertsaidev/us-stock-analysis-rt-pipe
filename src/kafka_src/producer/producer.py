@@ -99,6 +99,7 @@ def get_open_close_time(tz):
 
     # 週末直接休市
     if now_dt.weekday() >= 5:
+        slack_rt_pipe_notify("🔴 美股今日休市 , producer 程式已關閉 !")
         return None
 
     date_str = now_dt.strftime("%Y-%m-%d")
@@ -111,7 +112,7 @@ def get_open_close_time(tz):
     elif holiday_hours == "":
         # 節日休市
         logger.info("今日休市，結束程式")
-        slack_rt_pipe_notify("美股今日休市 , producer 程式已關閉 !")
+        slack_rt_pipe_notify("🔴 美股今日休市 💤 , producer 程式已關閉 !")
         sys.exit(0)
 
     else:
@@ -121,7 +122,7 @@ def get_open_close_time(tz):
 
 def market_open_watcher(tz, open_time, close_time):
 
-    slack_rt_pipe_notify("美股 realtime producer 程式已開啟 !")
+    slack_rt_pipe_notify("🟢 美股 realtime producer 程式已開啟 !")
     
     while datetime.now(ZoneInfo(tz)).time() < open_time:
 
@@ -137,22 +138,22 @@ def market_open_watcher(tz, open_time, close_time):
         s = remaining.seconds % 60
 
         if remaining > timedelta(hours=1):
-            logger.info(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒")  # 自動格式化如 1:30:00
-            slack_rt_pipe_notify(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒 !")
+            logger.info(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒")
+            slack_rt_pipe_notify(f"⏳ 距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒 !")
             time.sleep(1800)  # 30 分鐘檢查一次
 
         elif timedelta(minutes=6) < remaining <= timedelta(minutes=60):
-            logger.info(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒")  # 自動格式化如 1:30:00
-            slack_rt_pipe_notify(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒 !")
+            logger.info(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒")
+            slack_rt_pipe_notify(f"⏳ 距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒 !")
             time.sleep(300)  # 5 分鐘檢查一次
 
         else:
-            logger.info(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒")  # 自動格式化如 1:30:00
-            slack_rt_pipe_notify(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒 !")
+            logger.info(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒")
+            slack_rt_pipe_notify(f"⏳ 距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒 !")
             time.sleep(5)  # 5 s 檢查一次
 
     logger.info("美股已經開盤 !")
-    slack_rt_pipe_notify(f"美股已經開盤, 收盤時間為 {tz} {close_time.strftime('%H:%M')} !")
+    slack_rt_pipe_notify(f"🔔 美股已經開盤, 收盤時間為 {tz} {close_time.strftime('%H:%M')} !")
 
     return
 
@@ -175,7 +176,7 @@ def market_close_watcher(ws_ref, tz, close_time):
         if now_time >= close_time:
             logger.info(f"已收盤（{close_time}），停止程式")
             try:
-                slack_rt_pipe_notify("美股現在已經收盤 (程式延後關閉) !")
+                slack_rt_pipe_notify("🔴 美股現在已經收盤 🔕 (程式延後關閉) !")
                 producer.flush()
                 producer.close()
                 ws_ref.close()
@@ -187,13 +188,13 @@ def market_close_watcher(ws_ref, tz, close_time):
                 sys.exit(0)
 
         elif remaining <= timedelta(hours=1):
-            logger.info(f"距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒")  # 自動格式化如 1:30:00
-            slack_rt_pipe_notify(f"距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒 !")
+            logger.info(f"距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒") 
+            slack_rt_pipe_notify(f"⏳ 距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒 !")
             time.sleep(600)  # 10 分鐘檢查一次
 
         else:
-            logger.info(f"距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒")  # 自動格式化如 1:30:00
-            slack_rt_pipe_notify(f"距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒 !")
+            logger.info(f"距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒") 
+            slack_rt_pipe_notify(f"⏳ 距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒 !")
             time.sleep(1800) # 30 分鐘檢查一次
 
 
@@ -243,10 +244,10 @@ def on_message(ws, message):
 def on_error(ws, error):
     print(error)
 
-def on_close(ws):
+def on_close(ws, close_status_code, close_msg):
     print("### closed ###")
 
-def on_open(ws, sleep_range=(0.05, 0.15)):
+def on_open(ws, sleep_range=(0, 0.05)):
     
     with get_duckdb_conn() as conn:
 
@@ -257,8 +258,13 @@ def on_open(ws, sleep_range=(0.05, 0.15)):
         )
 
     for symbol in tickers:
-        ws.send(json.dumps({"type": "subscribe", "symbol": symbol}))
-        time.sleep(random.uniform(*sleep_range))
+        try:
+            ws.send(json.dumps({"type": "subscribe", "symbol": symbol}))
+            time.sleep(random.uniform(*sleep_range))
+
+        except Exception as e:
+            logger.warning(f"on_open: 訂閱中斷 ({symbol}): {e}")
+            break
 
 def main():
     tz = "America/New_York"
