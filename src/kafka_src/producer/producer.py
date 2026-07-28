@@ -99,8 +99,8 @@ def get_open_close_time(tz):
 
     # 週末直接休市
     if now_dt.weekday() >= 5:
-        slack_rt_pipe_notify("🔴 美股今日休市 , producer 程式已關閉 !")
-        return None
+        slack_rt_pipe_notify("🔴 美股今日休市 💤  , producer 程式已關閉 !")
+        os._exit(0)  # 整個 process 直接結束
 
     date_str = now_dt.strftime("%Y-%m-%d")
     holiday_hours = is_holiday(date_str)
@@ -113,7 +113,7 @@ def get_open_close_time(tz):
         # 節日休市
         logger.info("今日休市，結束程式")
         slack_rt_pipe_notify("🔴 美股今日休市 💤 , producer 程式已關閉 !")
-        sys.exit(0)
+        os._exit(0)  # 整個 process 直接結束
 
     else:
         # 節日縮短交易
@@ -123,6 +123,10 @@ def get_open_close_time(tz):
 def market_open_watcher(tz, open_time, close_time):
 
     slack_rt_pipe_notify("🟢 美股 realtime producer 程式已開啟 !")
+
+    if datetime.now(ZoneInfo(tz)).time() >= close_time:
+        slack_rt_pipe_notify("🔴 執行時已超過美股收盤時間，producer 程式已關閉 !")
+        os._exit(0)
     
     while datetime.now(ZoneInfo(tz)).time() < open_time:
 
@@ -185,7 +189,7 @@ def market_close_watcher(ws_ref, tz, close_time):
                 logger.error(f"關閉時發生錯誤: {e}")
 
             finally:
-                sys.exit(0)
+                os._exit(0)  # 整個 process 直接結束
 
         elif remaining <= timedelta(hours=1):
             logger.info(f"距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒") 
@@ -290,6 +294,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# 強制關閉程序
-sys.exit(0)
