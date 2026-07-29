@@ -1,5 +1,4 @@
 import os
-import sys
 import threading
 import requests
 
@@ -65,7 +64,7 @@ def get_open_close_time(tz):
 
     # 週末直接休市
     if now_dt.weekday() >= 5:
-        slack_rt_pipe_notify("🔴 美股今日休市 , realtime minio 程式已關閉 !")
+        slack_rt_pipe_notify("🛑 美股今日休市 , realtime minio 程式已關閉 !")
         os._exit(0)  # 整個 process 直接結束
 
     date_str = now_dt.strftime("%Y-%m-%d")
@@ -78,7 +77,7 @@ def get_open_close_time(tz):
     elif holiday_hours == "":
         # 節日休市
         logger.info("今日休市，結束程式")
-        slack_rt_pipe_notify("🔴 美股今日休市 , realtime minio 程式已關閉 !")
+        slack_rt_pipe_notify("🛑 美股今日休市 , realtime minio 程式已關閉 !")
         os._exit(0)  # 整個 process 直接結束
 
     else:
@@ -94,7 +93,7 @@ def market_close_watcher(tz, close_time):
  
         if now_time >= close_time:
             logger.info(f"已收盤（{close_time}），停止程式")
-            slack_rt_pipe_notify("🔴 美股 realtime minio 程式已關閉 !")
+            slack_rt_pipe_notify("🛑 美股 realtime minio 程式已關閉 !")
             os._exit(0)  # 整個 process 直接結束
 
         time.sleep(120)
@@ -208,7 +207,7 @@ def main():
     open_time, close_time = get_open_close_time(tz)
 
     if datetime.now(ZoneInfo(tz)).time() >= close_time:
-        slack_rt_pipe_notify("🔴 執行時已超過美股收盤時間，minio 程式已關閉 !")
+        slack_rt_pipe_notify("🛑 執行時已超過美股收盤時間，minio 程式已關閉 !")
         os._exit(0)
 
     # 1.thread: market_close_watcher 監控收盤時間

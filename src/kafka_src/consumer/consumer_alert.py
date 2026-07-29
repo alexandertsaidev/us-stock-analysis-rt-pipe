@@ -1,5 +1,4 @@
 import os
-import sys
 import threading
 import shelve
 
@@ -158,7 +157,8 @@ def load_alert_config() -> dict:
     # 找出沒有對應 Parquet 資料的 ticker，方便 debug
     missing = set(tickers) - set(config.keys())
     if missing:
-        print(f"[load_alert_config] ⚠️⚠️  無資料的 ticker：{missing}")
+        logger.info(f"[load_alert_config] ,無資料的 ticker：{missing}")
+        slack_rt_pipe_notify(f"[load_alert_config] ⚠️⚠️  無資料的 ticker：{missing}")
 
     return config
 
@@ -229,10 +229,10 @@ def run_alert_consumer():
                     crossed   = False
 
                     if "upper" in label and p <= threshold and price > threshold:
-                        direction = "🟩 ▲ 升破"
+                        direction = " ▲ 升破"
                         crossed   = True
                     elif "lower" in label and p >= threshold and price < threshold:
-                        direction = "🔻跌破"
+                        direction = " ▼ 跌破"
                         crossed   = True
 
                     if crossed:
@@ -266,7 +266,7 @@ def main():
     open_time, close_time = get_open_close_time(tz)
 
     if datetime.now(ZoneInfo(tz)).time() >= close_time:
-        slack_rt_pipe_notify("🔴 執行時已超過美股收盤時間，alert 程式已關閉 !")
+        slack_rt_pipe_notify("🛑 執行時已超過美股收盤時間，alert 程式已關閉 !")
         os._exit(0)
 
     # 1.thread: market_close_watcher 監控收盤時間

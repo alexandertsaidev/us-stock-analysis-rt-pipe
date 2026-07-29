@@ -3,7 +3,6 @@ import websocket
 import requests
 
 import os
-import sys
 import threading
 import random
 
@@ -99,7 +98,7 @@ def get_open_close_time(tz):
 
     # 週末直接休市
     if now_dt.weekday() >= 5:
-        slack_rt_pipe_notify("🔴 美股今日休市 💤  , producer 程式已關閉 !")
+        slack_rt_pipe_notify("🛑 美股今日休市 💤  , producer 程式已關閉 !")
         os._exit(0)  # 整個 process 直接結束
 
     date_str = now_dt.strftime("%Y-%m-%d")
@@ -112,7 +111,7 @@ def get_open_close_time(tz):
     elif holiday_hours == "":
         # 節日休市
         logger.info("今日休市，結束程式")
-        slack_rt_pipe_notify("🔴 美股今日休市 💤 , producer 程式已關閉 !")
+        slack_rt_pipe_notify("🛑 美股今日休市 💤 , producer 程式已關閉 !")
         os._exit(0)  # 整個 process 直接結束
 
     else:
@@ -125,7 +124,7 @@ def market_open_watcher(tz, open_time, close_time):
     slack_rt_pipe_notify("🟢 美股 realtime producer 程式已開啟 !")
 
     if datetime.now(ZoneInfo(tz)).time() >= close_time:
-        slack_rt_pipe_notify("🔴 執行時已超過美股收盤時間，producer 程式已關閉 !")
+        slack_rt_pipe_notify("🛑 執行時已超過美股收盤時間，producer 程式已關閉 !")
         os._exit(0)
     
     while datetime.now(ZoneInfo(tz)).time() < open_time:
@@ -180,9 +179,11 @@ def market_close_watcher(ws_ref, tz, close_time):
         if now_time >= close_time:
             logger.info(f"已收盤（{close_time}），停止程式")
             try:
-                slack_rt_pipe_notify("🔴 美股現在已經收盤 🔕 (程式延後關閉) !")
+                slack_rt_pipe_notify("🛑 美股現在已經收盤 🔕 (程式延後關閉) !")
                 producer.flush()
                 producer.close()
+                
+                ws_ref.keep_running = False  # 告訴 run_forever 不要 reconnect
                 ws_ref.close()
 
             except Exception as e:
