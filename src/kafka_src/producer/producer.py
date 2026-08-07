@@ -150,10 +150,12 @@ def market_open_watcher(tz, open_time, close_time):
             slack_rt_pipe_notify(f"⏳ 距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒 !")
             time.sleep(300)  # 5 分鐘檢查一次
 
-        else:
+        elif timedelta(seconds=30) < remaining <= timedelta(minutes=6):
             logger.info(f"距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒")
             slack_rt_pipe_notify(f"⏳ 距離美股開盤剩餘: {h} 時 {m} 分 {s} 秒 !")
             time.sleep(5)  # 5 s 檢查一次
+        else:
+            time.sleep(0.5)  # 0.5 s 檢查一次
 
     logger.info("美股已經開盤 !")
     slack_rt_pipe_notify(f"🔔 美股已經開盤, 收盤時間為 {tz} {close_time.strftime('%H:%M')} !")
@@ -192,10 +194,13 @@ def market_close_watcher(ws_ref, tz, close_time):
             finally:
                 os._exit(0)  # 整個 process 直接結束
 
-        elif remaining <= timedelta(hours=1):
-            logger.info(f"距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒") 
+        elif remaining <= timedelta(minutes=6):
+            time.sleep(1)  # 1 s 檢查一次
+
+        elif timedelta(minutes=6) < remaining <= timedelta(minutes=60):
+            logger.info(f"距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒")
             slack_rt_pipe_notify(f"⏳ 距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒 !")
-            time.sleep(600)  # 10 分鐘檢查一次
+            time.sleep(300)  # 5 分鐘檢查一次
 
         else:
             logger.info(f"距離美股收盤剩餘: {h} 時 {m} 分 {s} 秒") 
