@@ -1,8 +1,18 @@
 services:
-  kafka-producer:
+  kafka-producer-1:
     image: us-stock-rt-kafka:v1.0
-    container_name: kafka-producer
-    command: ["python", "-m", "src.kafka_src.producer.producer"]
+    container_name: kafka-producer-1
+    command: ["python", "-m", "src.kafka_src.producer.producer_1"]
+    restart: on-failure
+    env_file:
+      - .env
+    networks:
+      - realtime-network
+  
+  kafka-producer-2:
+    image: us-stock-rt-kafka:v1.0
+    container_name: kafka-producer-2
+    command: ["python", "-m", "src.kafka_src.producer.producer_2"]
     restart: on-failure
     env_file:
       - .env

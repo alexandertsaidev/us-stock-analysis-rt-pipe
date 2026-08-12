@@ -32,7 +32,7 @@ def is_holiday(date_str: str) -> str | None:
       ""            → 休市
       "09:30-13:00" → 節日，但縮短交易
     """
-    url = f"https://finnhub.io/api/v1/stock/market-holiday?exchange=US&token={os.environ['FINNHUB_API_KEY']}"
+    url = f"https://finnhub.io/api/v1/stock/market-holiday?exchange=US&token={os.environ['FINNHUB_API_KEY_1']}"
     try:
         response = requests.get(url, timeout=10)
         data = response.json()

@@ -66,7 +66,7 @@ def is_holiday(date_str: str) -> str | None:
       ""            → 休市
       "09:30-13:00" → 節日，但縮短交易
     """
-    url = f"https://finnhub.io/api/v1/stock/market-holiday?exchange=US&token={os.environ['FINNHUB_API_KEY']}"
+    url = f"https://finnhub.io/api/v1/stock/market-holiday?exchange=US&token={os.environ['FINNHUB_API_KEY_2']}"
     try:
         response = requests.get(url, timeout=10)
         data = response.json()
@@ -219,6 +219,7 @@ def get_co_fetch_list(
             SELECT DISTINCT "ticker"
             FROM read_parquet('s3://{bucket}/{object_name}')
             WHERE "created_at" >= CURRENT_DATE - INTERVAL '2 years'
+            ORDER BY "ticker" ASC
         """).df()["ticker"].tolist()
         
         logger.info(f"從 {bucket}/{object_name} 取得 {len(tickers)} 檔")
@@ -266,8 +267,9 @@ def on_open(ws, sleep_range=(0, 0.05)):
             bucket= MINIO_BUCKET,
             object_name= f"stock/screening/us_all_co_screen.parquet"
         )
+        mid = len(tickers) // 2
 
-    for symbol in tickers:
+    for symbol in tickers[mid:]:
         try:
             ws.send(json.dumps({"type": "subscribe", "symbol": symbol}))
             time.sleep(random.uniform(*sleep_range))
@@ -283,7 +285,7 @@ def main():
     market_open_watcher(tz, open_time, close_time)
 
     websocket.enableTrace(True)
-    ws = websocket.WebSocketApp(f"wss://ws.finnhub.io?token={os.environ['FINNHUB_API_KEY']}",
+    ws = websocket.WebSocketApp(f"wss://ws.finnhub.io?token={os.environ['FINNHUB_API_KEY_2']}",
                             on_message = on_message,
                             on_error = on_error,
                             on_close = on_close,
